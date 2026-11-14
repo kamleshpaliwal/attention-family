@@ -15,6 +15,5 @@ if __name__ == "__main__":        # only runs when you execute this file directl
 
     print("words   :", words)
     print("scores  :", scores, "shape", scores.shape)
-    print("exp     :", exps.round(4), "sum =", exps.sum().round(4))
     print("weights :", weights.round(4), "shape", weights.shape)
     print("sum of weights:", weights.sum())

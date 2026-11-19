@@ -145,8 +145,15 @@ flowchart TD
       <article class="card">
         <div class="card-head"><span class="num">1</span><h3>Softmax</h3><span class="file">step01_softmax.py</span></div>
         <div class="row"><span class="label">What</span><div>Turns raw scores into weights that are positive and sum to 1.</div></div>
-        <div class="row"><span class="label">Why exp</span><div>Always positive, keeps the order, and widens gaps so the best word dominates. Plain division breaks on negative scores.</div></div>
+        <div class="row"><span class="label">Why this formula</span><div>The weights must be positive, add up to 1, keep the score order, let the best word stand out, and be smooth so training can learn through them. <code>e^s</code> is always positive, rises with the score, and widens gaps (3.0 vs 0.3 becomes 20.1 vs 1.35). Dividing by the total makes the weights sum to 1. Plain division of raw scores breaks on negative scores or a zero total; squaring loses the sign; "pick the max" is not smooth. Base e is used because its derivative is itself, which keeps training maths clean.</div></div>
         <div class="row"><span class="label">Formula</span><code class="formula">w_i = e^(s_i) / sum_j e^(s_j)</code></div>
+        <div class="row"><span class="label">Terms</span><div>
+          <code>w_i</code> weight of word i: between 0 and 1, the answer.<br>
+          <code>s_i</code> raw score of word i. Here s means score, not the decoder state s.<br>
+          <code>e^(s_i)</code> the exponential of the score: positive, and bigger gaps than before.<br>
+          <code>sum_j</code> go through every word j and add up. For our example the total is 26.841.<br>
+          <code>/</code> dividing by that total makes all weights add up to 1.
+        </div></div>
         <div class="row"><span class="label">Numbers</span><code class="ex">scores  [0.3  3.0  1.4  0.3]
 exp     [1.35 20.09 4.06 1.35]  sum 26.84
 weights [0.05 0.75 0.15 0.05]</code></div>
@@ -166,6 +173,13 @@ check: 0.050 + 0.748 + 0.151 + 0.050 = 1</pre></div>
         <div class="row"><span class="label">What</span><div>Each word has an id. The id picks one row of a table. That row is the word's vector.</div></div>
         <div class="row"><span class="label">Why</span><div>The model can only do maths on numbers. Training later makes similar words get similar rows.</div></div>
         <div class="row"><span class="label">Formula</span><code class="formula">vector(word) = table[id(word)]</code></div>
+        <div class="row"><span class="label">Terms</span><div>
+          <code>id(word)</code> the word's position in the vocabulary list, e.g. "cat" is 1.<br>
+          <code>table</code> grid of numbers with one row per word, shape (vocab size, 4).<br>
+          <code>table[id]</code> pick that one row. It is a lookup, no calculation.<br>
+          <code>vector</code> the row picked, shape (4,): the word as numbers.
+        </div></div>
+        <div class="row"><span class="label">Why this formula</span><div>The id alone is just a label: id 3 is not "three times" id 1, so the model cannot learn from it. A row of numbers per word lets words be close or far apart, and training can adjust each row so related words end up with similar vectors.</div></div>
         <div class="row"><span class="label">Numbers</span><code class="ex">"cat" has id 1
 vector [-0.536 0.362 1.304 0.947]
 sentence -> (4,4)</code></div>
@@ -195,6 +209,7 @@ sentence ids [0,1,2,3]  ->  table[[0,1,2,3]]  ->  x, shape (4,4)
           <code>Wx x_t</code> matrix times vector: output number i = row i of Wx dotted with x_t. Result (4,).<br>
           <code>tanh</code> squashes every number into the range -1 to 1, so the memory cannot blow up.
         </div></div>
+        <div class="row"><span class="label">Why this formula</span><div>The word and the memory both matter, so each gets its own weights (<code>Wx</code> for the word, <code>Wh</code> for the memory) and the two are added. The memory is what carries the order and context, so "cat after The" differs from "cat" alone; averaging the embeddings would lose that. <code>b</code> shifts the result. <code>tanh</code> keeps values bounded and adds a non-linearity; without it, many steps would just collapse into one big linear map and the numbers could grow without limit.</div></div>
         <div class="row"><span class="label">Numbers</span><code class="ex">start h = [0 0 0 0]
 h2 (cat) [-0.314 -0.267 0.348 0.251]
 H shape (4,4)</code></div>
@@ -267,6 +282,7 @@ H = rows h_1..h_4, shape (4,4). h_4 is later used as s0.</pre></div>
           <code>tanh</code> squashes every number into -1 to 1.<br>
           Same recipe as the encoder, but with its own separate weights, fed with French words.
         </div></div>
+        <div class="row"><span class="label">Why this formula</span><div>The next word depends on what has already been written, so the last word <code>y</code> is fed back in (otherwise the decoder could repeat itself) and the old memory <code>s</code> carries the whole history. Starting from the encoder's last state gives it a summary of the English sentence. The reasons for adding and for <code>tanh</code> are the same as in the encoder.</div></div>
         <div class="row"><span class="label">Numbers</span><code class="ex">s0 = H[-1] [-0.392 -0.461 0.182 0.682]
 s1 (after Le)   [-0.92 -0.356 -0.295 0.787]
 s2 (after chat) [-0.825 0.539 -0.885 0.292]</code></div>
@@ -312,6 +328,15 @@ write "chat" (gives s2, used to pick the next word)
         <div class="row"><span class="label">What</span><div>Gives every English word one number: how useful is it for the next French word, given s?</div></div>
         <div class="row"><span class="label">Dot</span><code class="formula">f = s . h   (no weights to learn, same sizes needed)</code></div>
         <div class="row"><span class="label">Additive</span><code class="formula">f = v . tanh(W1 s + W2 h)   (Bahdanau, learnable)</code></div>
+        <div class="row"><span class="label">Terms</span><div>
+          <code>s</code> decoder memory (after "Le"), (4,).<br>
+          <code>h</code> one encoder state, (4,). Done for each of the four words.<br>
+          <code>s . h</code> dot product: multiply matching numbers and add them up. Large when the two point the same way.<br>
+          <code>W1</code>, <code>W2</code> (4,4) learned matrices that move s and h into a shared space.<br>
+          <code>tanh</code> bends the sum so the scorer can learn more than a straight comparison.<br>
+          <code>v</code> (4,) learned vector; <code>v .</code> adds up the four numbers with learned importance, giving ONE score.
+        </div></div>
+        <div class="row"><span class="label">Why this formula</span><div>The dot product has nothing to learn, and it only measures similarity, but the right word to look at is not always similar to the memory (after "Le" the memory means "a masculine noun is needed", while "cat" means a small animal). In the additive form, <code>W1</code> and <code>W2</code> translate both into one space where they can be compared, adding them combines the two, <code>tanh</code> lets the scorer learn non-straight-line rules, and <code>v</code> squeezes the result down to one number per word. All of W1, W2, v are learned in training.</div></div>
         <div class="row"><span class="label">Shapes</span><div><span class="mono">W1@s (4,)</span> + <span class="mono">H@W2.T (4,4)</span> broadcast, tanh, <span class="mono">@ v</span> gives <span class="mono">(4,)</span></div></div>
         <div class="row"><span class="label">Numbers</span><code class="ex">untrained additive scores
 [-0.107 -0.198 -0.182 -0.353]
@@ -343,6 +368,13 @@ softmax -> weights [0.276 0.252 0.256 0.216]</pre></div>
         <div class="row"><span class="label">Why</span><div>It tells the decoder "the part of the sentence that matters now". Weight 0.75 keeps three quarters of that word's vector.</div></div>
         <div class="row"><span class="label">Formula</span><code class="formula">context = sum_i weight_i * h_i  =  weights @ H</code></div>
         <div class="row"><span class="label">Code</span><code class="formula">weights[:, None] * H   then   .sum(axis=0)</code></div>
+        <div class="row"><span class="label">Terms</span><div>
+          <code>weight_i</code> attention weight of word i from softmax (step 1), between 0 and 1.<br>
+          <code>h_i</code> encoder state of word i (a row of H), (4,).<br>
+          <code>weight_i * h_i</code> that state scaled: keep that share of it.<br>
+          <code>sum_i</code> add the scaled rows together, giving ONE vector (4,): the context.
+        </div></div>
+        <div class="row"><span class="label">Why this formula</span><div>The weights add up to 1, so this is a weighted average: the context stays on the same scale as one encoder state and is dominated by the words with big weights ("mostly cat"). It always has the same size, however long the sentence. And it is smooth, so training can pass gradients back through it to the weights and on to the scorer.</div></div>
         <div class="row"><span class="label">Numbers</span><code class="ex">context [-0.363 -0.234 0.313 0.305]
 h2 cat  [-0.314 -0.267 0.348 0.251]  (close)</code></div>
         <div class="row"><span class="label">Worked</span><pre class="work">weights = [0.050 0.748 0.151 0.050]

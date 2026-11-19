@@ -185,6 +185,16 @@ sentence ids [0,1,2,3]  ->  table[[0,1,2,3]]  ->  x, shape (4,4)
         <div class="row"><span class="label">What</span><div>An RNN reads the English sentence one word at a time and keeps a running memory. Each new state mixes the current word with everything read before.</div></div>
         <div class="row"><span class="label">Why</span><div>A word's meaning depends on its neighbours, so h2 is "cat, after The".</div></div>
         <div class="row"><span class="label">Formula</span><code class="formula">h_t = tanh(Wx x_t + Wh h_(t-1) + b)</code></div>
+        <div class="row"><span class="label">Terms</span><div>
+          <code>h_t</code> new state after reading word t: the answer, shape (4,).<br>
+          <code>x_t</code> vector of the current word, (4,).<br>
+          <code>h_(t-1)</code> the memory before this word, (4,). All zeros for the first word.<br>
+          <code>Wx</code> (4,4) weights: how each number of the word vector feeds each number of the memory.<br>
+          <code>Wh</code> (4,4) weights: how much of the old memory is carried forward.<br>
+          <code>b</code> (4,) constant nudge added to each number. Zeros here.<br>
+          <code>Wx x_t</code> matrix times vector: output number i = row i of Wx dotted with x_t. Result (4,).<br>
+          <code>tanh</code> squashes every number into the range -1 to 1, so the memory cannot blow up.
+        </div></div>
         <div class="row"><span class="label">Numbers</span><code class="ex">start h = [0 0 0 0]
 h2 (cat) [-0.314 -0.267 0.348 0.251]
 H shape (4,4)</code></div>
@@ -208,6 +218,37 @@ all four components:
 
 h1 used a zero previous state, so Wh@0 = 0 and
  h1 = tanh(Wx@x1) = [0.005 -0.114 0.041 -0.157]</pre></div>
+        <div class="row"><span class="label">Each step</span><pre class="work">The memory h changes at every word. sum = Wx x_t + Wh h_(t-1) + b
+
+t=1  "The"   previous memory h_0 = [0 0 0 0]
+ x_1    = [ 0.126 -0.132  0.640  0.105]
+ Wx x_1 = [ 0.005 -0.114  0.041 -0.159]
+ Wh h_0 = [ 0.000  0.000  0.000  0.000]
+ sum    = [ 0.005 -0.114  0.041 -0.159]
+ h_1    = [ 0.005 -0.114  0.041 -0.157]   tanh(sum)
+
+t=2  "cat"   previous memory h_1
+ x_2    = [-0.536  0.362  1.304  0.947]
+ Wx x_2 = [-0.346 -0.237  0.233  0.137]
+ Wh h_1 = [ 0.021 -0.037  0.130  0.119]
+ sum    = [-0.325 -0.273  0.363  0.256]
+ h_2    = [-0.314 -0.267  0.348  0.251]
+
+t=3  "sat"   previous memory h_2
+ x_3    = [-0.704 -1.265 -0.623  0.041]
+ Wx x_3 = [-0.771 -0.422 -0.312  0.525]
+ Wh h_2 = [-0.136  0.387  0.594  0.166]
+ sum    = [-0.907 -0.035  0.282  0.691]
+ h_3    = [-0.720 -0.035  0.275  0.599]
+
+t=4  "today" previous memory h_3
+ x_4    = [-2.325 -0.219 -1.246 -0.732]
+ Wx x_4 = [-0.220 -0.980 -0.674  0.955]
+ Wh h_3 = [-0.194  0.481  0.858 -0.122]
+ sum    = [-0.414 -0.498  0.184  0.833]
+ h_4    = [-0.392 -0.461  0.182  0.682]
+
+H = rows h_1..h_4, shape (4,4). h_4 is later used as s0.</pre></div>
         <div class="gotcha"><b>Remember:</b> one word at a time, previous state passed in. h4 knows "The" only because the memory was handed along the chain. tanh keeps values between -1 and 1.</div>
       </article>
 
@@ -216,6 +257,16 @@ h1 used a zero previous state, so Wh@0 = 0 and
         <div class="row"><span class="label">What</span><div>The decoder's memory of what it has written. It is updated with the last French word.</div></div>
         <div class="row"><span class="label">Why</span><div>It starts from the encoder's summary (H[-1]) so it knows the source sentence, then tracks the French so far.</div></div>
         <div class="row"><span class="label">Formula</span><code class="formula">s_t = tanh(Wy y_(t-1) + Ws s_(t-1) + b)</code></div>
+        <div class="row"><span class="label">Terms</span><div>
+          <code>s_t</code> new decoder memory after writing a word, shape (4,).<br>
+          <code>y_(t-1)</code> vector of the French word just written, (4,). Fed back in, so the decoder knows what it said.<br>
+          <code>s_(t-1)</code> the memory before this word, (4,). The very first one, s0, is H[-1].<br>
+          <code>Wy</code> (4,4) weights: how the last written word changes the memory.<br>
+          <code>Ws</code> (4,4) weights: how much old memory is carried forward.<br>
+          <code>b</code> (4,) constant nudge, zeros here.<br>
+          <code>tanh</code> squashes every number into -1 to 1.<br>
+          Same recipe as the encoder, but with its own separate weights, fed with French words.
+        </div></div>
         <div class="row"><span class="label">Numbers</span><code class="ex">s0 = H[-1] [-0.392 -0.461 0.182 0.682]
 s1 (after Le)   [-0.92 -0.356 -0.295 0.787]
 s2 (after chat) [-0.825 0.539 -0.885 0.292]</code></div>
@@ -236,6 +287,23 @@ all four components:
  Ws@s0 = [-0.260 -0.038 -0.354  0.806]
  pre   = [-1.586 -0.373 -0.304  1.063]
  s1    = [-0.920 -0.356 -0.295  0.787]</pre></div>
+        <div class="row"><span class="label">Each step</span><pre class="work">The memory s changes after each written word. sum = Wy y + Ws s_prev + b
+
+start  s0 = H[-1] = [-0.392 -0.461  0.182  0.682]
+
+write "Le"   (gives s1, used to pick "chat")
+ y(Le)  = [-0.544 -0.316  0.412  1.043]
+ Wy y   = [-1.326 -0.334  0.050  0.257]
+ Ws s0  = [-0.260 -0.038 -0.354  0.806]
+ sum    = [-1.586 -0.373 -0.304  1.063]
+ s1     = [-0.920 -0.356 -0.295  0.787]   tanh(sum)
+
+write "chat" (gives s2, used to pick the next word)
+ y(chat)= [-0.129  1.366 -0.665  0.352]
+ Wy y   = [-0.661  0.910 -0.776 -0.689]
+ Ws s1  = [-0.512 -0.308 -0.622  0.990]
+ sum    = [-1.173  0.603 -1.398  0.301]
+ s2     = [-0.825  0.539 -0.885  0.292]</pre></div>
         <div class="gotcha"><b>Remember:</b> s is memory, not a word and not a score. Later the context vector is fed in too (step 8).</div>
       </article>
 

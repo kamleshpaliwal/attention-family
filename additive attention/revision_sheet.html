@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Attention Revision Sheet</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  /* Layout: a flow diagram first, then one card per step (what / why / formula / shapes / numbers), then a mix-ups list. */
+  :root {
+    --bg: #f6f8fa;
+    --surface: #ffffff;
+    --fg: #14202b;
+    --muted: #5a6b7a;
+    --line: #d6dee6;
+    --accent: #0b7a75;
+    --accent-soft: #dff2f0;
+    --warn: #b45309;
+    --warn-soft: #fdf0dc;
+    --code-bg: #eef2f6;
+    --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-head: "Space Grotesk", "Inter", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e151c; --surface: #16202a; --fg: #e4ecf3; --muted: #93a4b4; --line: #2a3947;
+      --accent: #4fd1c5; --accent-soft: #123b3b; --warn: #f2b05e; --warn-soft: #3a2a12; --code-bg: #1d2a36;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e151c; --surface: #16202a; --fg: #e4ecf3; --muted: #93a4b4; --line: #2a3947;
+    --accent: #4fd1c5; --accent-soft: #123b3b; --warn: #f2b05e; --warn-soft: #3a2a12; --code-bg: #1d2a36;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.55;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 28px 56px;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: 36px; }
+  h1, h2, h3 { font-family: var(--font-head); text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
+  h1 { font-size: clamp(1.7rem, 4vw, 2.4rem); }
+  h2 { font-size: 1.25rem; }
+  h3 { font-size: 1.1rem; }
+  p { margin: 0; }
+  code, .mono { font-family: var(--font-mono); font-size: 0.86em; }
+  header { display: flex; flex-direction: column; gap: 10px; }
+  header p { color: var(--muted); max-width: 62ch; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 0.85rem; color: var(--muted); }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; background: var(--accent); }
+  .dot.todo { background: transparent; border: 2px dashed var(--muted); }
+
+  section { display: flex; flex-direction: column; gap: 14px; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
+  .diagram { overflow-x: auto; }
+  .diagram pre.mermaid { margin: 0; min-width: 640px; text-align: center; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 480px), 1fr)); gap: 16px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 18px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .card.todo { border-style: dashed; background: transparent; }
+  .card-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .num { font-family: var(--font-head); font-weight: 700; font-size: 1.6rem; color: var(--accent); line-height: 1; min-width: 1.4ch; }
+  .card.todo .num { color: var(--muted); }
+  .file { margin-left: auto; font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); }
+  .row { display: grid; grid-template-columns: 78px 1fr; gap: 10px; align-items: baseline; min-width: 0; }
+  .label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
+  .row > div { min-width: 0; overflow-wrap: anywhere; }
+  .formula { background: var(--code-bg); border-radius: 6px; padding: 7px 10px; font-family: var(--font-mono); font-size: 0.84rem; overflow-x: auto; display: block; }
+  .ex { background: var(--accent-soft); border-radius: 6px; padding: 7px 10px; font-family: var(--font-mono); font-size: 0.8rem; overflow-x: auto; display: block; white-space: pre; }
+  .work { margin: 0; background: var(--code-bg); border-left: 3px solid var(--accent); border-radius: 6px; padding: 9px 12px; font-family: var(--font-mono); font-size: 0.78rem; line-height: 1.6; overflow-x: auto; white-space: pre; }
+  .gotcha { background: var(--warn-soft); border-radius: 6px; padding: 7px 10px; font-size: 0.88rem; }
+  .gotcha b { color: var(--warn); }
+
+  .shapes { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+  .shapes th, .shapes td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); }
+  .shapes th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  .table-scroll { overflow-x: auto; }
+  ul.mix { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 8px; }
+  ul.mix li::marker { color: var(--warn); }
+  @media (max-width: 480px) { .row { grid-template-columns: 1fr; gap: 2px; } .file { margin-left: 0; width: 100%; } }
+  @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;700&display=swap">
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Attention Revision Sheet</h1>
+    <p>Bahdanau (additive) attention for a translator, in the order we built it. Running example: "The cat sat today", where the decoder has written "Le" and must produce "chat". Steps 1 to 6 are done.</p>
+    <div class="legend"><span><i class="dot"></i>done, code exists</span><span><i class="dot todo"></i>still to do</span><span class="mono">(4,) = vector of 4 numbers &nbsp; (4,4) = 4 rows of 4</span></div>
+  </header>
+
+  <section>
+    <h2>How the pieces connect, for one decoding step</h2>
+    <div class="panel diagram">
+<pre class="mermaid">
+flowchart TD
+  A["English: The cat sat today"] -->|"step 2: embed"| B["x  (4,4)"]
+  B -->|"step 3: RNN, one word at a time"| C["H = h1..h4  (4,4)"]
+  C -->|"last row, H[-1]"| D["s0  (4,)"]
+  E["French so far: Le"] -->|"step 2: embed"| F["y  (4,)"]
+  D --> G["step 4: decoder_step"]
+  F --> G
+  G --> S["s1  (4,)  decoder memory"]
+  S --> I["step 5: additive_scores"]
+  C --> I
+  I --> J["scores  (4,)"]
+  J -->|"step 1: softmax"| K["weights  (4,)"]
+  K --> L["step 6: weights @ H"]
+  C --> L
+  L --> M["context  (4,)"]
+  M --> N["step 7: stack with s1, linear, softmax, pick word = chat"]
+  style N stroke-dasharray: 5 5
+</pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>Shapes at a glance</h2>
+    <div class="panel table-scroll">
+      <table class="shapes">
+        <tr><th>Name</th><th>Shape</th><th>Meaning</th><th>Made in</th></tr>
+        <tr><td class="mono">src_embeddings</td><td class="mono">(4,4)</td><td>one vector per English word (random until training)</td><td>step 2</td></tr>
+        <tr><td class="mono">tgt_embeddings</td><td class="mono">(5,4)</td><td>one vector per French word</td><td>step 2</td></tr>
+        <tr><td class="mono">H</td><td class="mono">(4,4)</td><td>all encoder states, row i = h(i+1)</td><td>step 3</td></tr>
+        <tr><td class="mono">H[-1]</td><td class="mono">(4,)</td><td>only the last row (h4), used as s0</td><td>step 4</td></tr>
+        <tr><td class="mono">s1</td><td class="mono">(4,)</td><td>decoder memory after writing "Le"</td><td>step 4</td></tr>
+        <tr><td class="mono">scores</td><td class="mono">(4,)</td><td>one raw number per English word</td><td>step 5</td></tr>
+        <tr><td class="mono">weights</td><td class="mono">(4,)</td><td>softmax of scores, sums to 1</td><td>step 1 / 6</td></tr>
+        <tr><td class="mono">context</td><td class="mono">(4,)</td><td>weighted blend of the rows of H</td><td>step 6</td></tr>
+      </table>
+    </div>
+    <p style="color:var(--muted);font-size:0.86rem">Real sizes: embedding 768 or 1536, hidden state 512 to 1024, vocabulary about 50,000, sentence 20 to 100 words.</p>
+  </section>
+
+  <section>
+    <h2>Step by step</h2>
+    <div class="cards">
+
+      <article class="card">
+        <div class="card-head"><span class="num">1</span><h3>Softmax</h3><span class="file">step01_softmax.py</span></div>
+        <div class="row"><span class="label">What</span><div>Turns raw scores into weights that are positive and sum to 1.</div></div>
+        <div class="row"><span class="label">Why exp</span><div>Always positive, keeps the order, and widens gaps so the best word dominates. Plain division breaks on negative scores.</div></div>
+        <div class="row"><span class="label">Formula</span><code class="formula">w_i = e^(s_i) / sum_j e^(s_j)</code></div>
+        <div class="row"><span class="label">Numbers</span><code class="ex">scores  [0.3  3.0  1.4  0.3]
+exp     [1.35 20.09 4.06 1.35]  sum 26.84
+weights [0.05 0.75 0.15 0.05]</code></div>
+        <div class="row"><span class="label">Worked</span><pre class="work">e^0.3 = 1.350    e^3.0 = 20.086
+e^1.4 = 4.055    e^0.3 = 1.350
+sum   = 1.350 + 20.086 + 4.055 + 1.350 = 26.841
+
+cat weight = 20.086 / 26.841 = 0.748
+sat weight =  4.055 / 26.841 = 0.151
+The / today =  1.350 / 26.841 = 0.050 each
+check: 0.050 + 0.748 + 0.151 + 0.050 = 1</pre></div>
+        <div class="gotcha"><b>Remember:</b> adding the same number to every score changes nothing. Huge scores overflow, so real code subtracts the max first.</div>
+      </article>
+
+      <article class="card">
+        <div class="card-head"><span class="num">2</span><h3>Word vectors (embeddings)</h3><span class="file">step02_embeddings.py</span></div>
+        <div class="row"><span class="label">What</span><div>Each word has an id. The id picks one row of a table. That row is the word's vector.</div></div>
+        <div class="row"><span class="label">Why</span><div>The model can only do maths on numbers. Training later makes similar words get similar rows.</div></div>
+        <div class="row"><span class="label">Formula</span><code class="formula">vector(word) = table[id(word)]</code></div>
+        <div class="row"><span class="label">Numbers</span><code class="ex">"cat" has id 1
+vector [-0.536 0.362 1.304 0.947]
+sentence -> (4,4)</code></div>
+        <div class="row"><span class="label">Worked</span><pre class="work">English table (4,4), one row per word:
+id 0 The   [ 0.126 -0.132  0.640  0.105]
+id 1 cat   [-0.536  0.362  1.304  0.947]
+id 2 sat   [-0.704 -1.265 -0.623  0.041]
+id 3 today [-2.325 -0.219 -1.246 -0.732]
+
+sentence ids [0,1,2,3]  ->  table[[0,1,2,3]]  ->  x, shape (4,4)
+"Le" in the French table: [-0.544 -0.316 0.412 1.043]</pre></div>
+        <div class="gotcha"><b>Remember:</b> the numbers are random now and mean nothing until step 10. Real table: (50000, 768).</div>
+      </article>
+
+      <article class="card">
+        <div class="card-head"><span class="num">3</span><h3>Encoder states</h3><span class="file">step03_encoder.py</span></div>
+        <div class="row"><span class="label">What</span><div>An RNN reads the English sentence one word at a time and keeps a running memory. Each new state mixes the current word with everything read before.</div></div>
+        <div class="row"><span class="label">Why</span><div>A word's meaning depends on its neighbours, so h2 is "cat, after The".</div></div>
+        <div class="row"><span class="label">Formula</span><code class="formula">h_t = tanh(Wx x_t + Wh h_(t-1) + b)</code></div>
+        <div class="row"><span class="label">Numbers</span><code class="ex">start h = [0 0 0 0]
+h2 (cat) [-0.314 -0.267 0.348 0.251]
+H shape (4,4)</code></div>
+        <div class="row"><span class="label">Worked</span><pre class="work">h2 for "cat". Previous state h1 = [0.005 -0.114 0.041 -0.157]
+x2 = [-0.536 0.362 1.304 0.947]
+
+Wx row 0 = [0.173 0.411 0.165 -0.652]
+ Wx.x2 [0] = 0.173*-0.536 + 0.411*0.362 + 0.165*1.304 + -0.652*0.947
+           = -0.093 + 0.149 + 0.215 - 0.617 = -0.346
+Wh row 0 = [0.020 -0.146 -0.391 -0.129]
+ Wh.h1 [0] = 0.000 + 0.017 - 0.016 + 0.020 = 0.021
+
+pre [0] = -0.346 + 0.021 + b(0) = -0.325
+h2  [0] = tanh(-0.325) = -0.314
+
+all four components:
+ Wx@x2 = [-0.346 -0.237  0.233  0.137]
+ Wh@h1 = [ 0.021 -0.037  0.130  0.119]
+ pre   = [-0.325 -0.273  0.363  0.256]
+ h2    = [-0.314 -0.267  0.348  0.251]   (tanh of each)
+
+h1 used a zero previous state, so Wh@0 = 0 and
+ h1 = tanh(Wx@x1) = [0.005 -0.114 0.041 -0.157]</pre></div>
+        <div class="gotcha"><b>Remember:</b> one word at a time, previous state passed in. h4 knows "The" only because the memory was handed along the chain. tanh keeps values between -1 and 1.</div>
+      </article>
+
+      <article class="card">
+        <div class="card-head"><span class="num">4</span><h3>Decoder state</h3><span class="file">step04_decoder.py</span></div>
+        <div class="row"><span class="label">What</span><div>The decoder's memory of what it has written. It is updated with the last French word.</div></div>
+        <div class="row"><span class="label">Why</span><div>It starts from the encoder's summary (H[-1]) so it knows the source sentence, then tracks the French so far.</div></div>
+        <div class="row"><span class="label">Formula</span><code class="formula">s_t = tanh(Wy y_(t-1) + Ws s_(t-1) + b)</code></div>
+        <div class="row"><span class="label">Numbers</span><code class="ex">s0 = H[-1] [-0.392 -0.461 0.182 0.682]
+s1 (after Le)   [-0.92 -0.356 -0.295 0.787]
+s2 (after chat) [-0.825 0.539 -0.885 0.292]</code></div>
+        <div class="row"><span class="label">Worked</span><pre class="work">s1 = decoder memory after "Le"
+y(Le) = [-0.544 -0.316  0.412  1.043]
+s0    = [-0.392 -0.461  0.182  0.682]   (= H[-1])
+
+Wy row 0 = [0.095 -0.261 -0.207 -1.221]
+ Wy.y [0] = -0.051 + 0.083 - 0.085 - 1.273 = -1.326
+Ws row 0 = [0.273 -0.304 0.063 -0.446]
+ Ws.s0 [0] = -0.107 + 0.140 + 0.012 - 0.304 = -0.260
+
+pre [0] = -1.326 + -0.260 = -1.586
+s1  [0] = tanh(-1.586) = -0.920
+
+all four components:
+ Wy@y  = [-1.326 -0.334  0.050  0.257]
+ Ws@s0 = [-0.260 -0.038 -0.354  0.806]
+ pre   = [-1.586 -0.373 -0.304  1.063]
+ s1    = [-0.920 -0.356 -0.295  0.787]</pre></div>
+        <div class="gotcha"><b>Remember:</b> s is memory, not a word and not a score. Later the context vector is fed in too (step 8).</div>
+      </article>
+
+      <article class="card">
+        <div class="card-head"><span class="num">5</span><h3>Scoring function f(s, h)</h3><span class="file">step05_scoring.py</span></div>
+        <div class="row"><span class="label">What</span><div>Gives every English word one number: how useful is it for the next French word, given s?</div></div>
+        <div class="row"><span class="label">Dot</span><code class="formula">f = s . h   (no weights to learn, same sizes needed)</code></div>
+        <div class="row"><span class="label">Additive</span><code class="formula">f = v . tanh(W1 s + W2 h)   (Bahdanau, learnable)</code></div>
+        <div class="row"><span class="label">Shapes</span><div><span class="mono">W1@s (4,)</span> + <span class="mono">H@W2.T (4,4)</span> broadcast, tanh, <span class="mono">@ v</span> gives <span class="mono">(4,)</span></div></div>
+        <div class="row"><span class="label">Numbers</span><code class="ex">untrained additive scores
+[-0.107 -0.198 -0.182 -0.353]
+-> weights [0.276 0.252 0.256 0.216]</code></div>
+        <div class="row"><span class="label">Worked</span><pre class="work">s1 = [-0.920 -0.356 -0.295 0.787]
+
+DOT, word "cat": h2 = [-0.314 -0.267 0.348 0.251]
+ s1.h2 = -0.920*-0.314 + -0.356*-0.267 + -0.295*0.348 + 0.787*0.251
+       =  0.289 + 0.095 - 0.102 + 0.197 = 0.479
+ all words: The -0.100   cat 0.479   sat 1.064   today 1.007
+
+ADDITIVE, word "cat":
+ W1@s1 = [-0.768  0.453 -0.366  0.250]
+ W2@h2 = [ 0.098 -0.179  0.259 -0.286]
+ sum   = [-0.670  0.274 -0.107 -0.036]
+ tanh  = [-0.585  0.267 -0.106 -0.036]
+ v     = [ 0.441  0.290  0.046  0.335]
+ score = -0.585*0.441 + 0.267*0.290 + -0.106*0.046 + -0.036*0.335
+       = -0.258 + 0.078 - 0.005 - 0.012 = -0.198
+ all words: [-0.107 -0.198 -0.182 -0.353]
+
+softmax -> weights [0.276 0.252 0.256 0.216]</pre></div>
+        <div class="gotcha"><b>Remember:</b> the function returns scores only. Softmax is applied after it. W1, W2, v are random now, so weights look flat. Training should push them toward 0.05 / 0.75 / 0.15 / 0.05.</div>
+      </article>
+
+      <article class="card">
+        <div class="card-head"><span class="num">6</span><h3>Context vector</h3><span class="file">step06_context.py</span></div>
+        <div class="row"><span class="label">What</span><div>One vector that blends all encoder states, each taken in proportion to its weight.</div></div>
+        <div class="row"><span class="label">Why</span><div>It tells the decoder "the part of the sentence that matters now". Weight 0.75 keeps three quarters of that word's vector.</div></div>
+        <div class="row"><span class="label">Formula</span><code class="formula">context = sum_i weight_i * h_i  =  weights @ H</code></div>
+        <div class="row"><span class="label">Code</span><code class="formula">weights[:, None] * H   then   .sum(axis=0)</code></div>
+        <div class="row"><span class="label">Numbers</span><code class="ex">context [-0.363 -0.234 0.313 0.305]
+h2 cat  [-0.314 -0.267 0.348 0.251]  (close)</code></div>
+        <div class="row"><span class="label">Worked</span><pre class="work">weights = [0.050 0.748 0.151 0.050]
+
+each row of H times its weight:
+ 0.050 * h1 = [ 0.000 -0.006  0.002 -0.008]
+ 0.748 * h2 = [-0.235 -0.200  0.260  0.188]   <- biggest piece (cat)
+ 0.151 * h3 = [-0.109 -0.005  0.042  0.090]
+ 0.050 * h4 = [-0.020 -0.023  0.009  0.034]
+
+add the four rows (column by column):
+ first number : 0.000 - 0.235 - 0.109 - 0.020 = -0.363
+ context      = [-0.363 -0.234  0.313  0.305]
+ compare h2   = [-0.314 -0.267  0.348  0.251]</pre></div>
+        <div class="gotcha"><b>Remember:</b> H is all four states. <span class="mono">[:, None]</span> makes the weights a column (4,1) so each ROW of H is scaled by its own weight. Always shape (4,), however long the sentence.</div>
+      </article>
+
+      <article class="card todo">
+        <div class="card-head"><span class="num">7</span><h3>Prediction</h3></div>
+        <div class="row"><span class="label">Plan</span><div>Stack [context, s], apply a linear layer to get one score per French word, softmax, pick the largest. Expect "chat".</div></div>
+      </article>
+      <article class="card todo">
+        <div class="card-head"><span class="num">8</span><h3>One full decoding step</h3></div>
+        <div class="row"><span class="label">Plan</span><div>Chain steps 1 to 7 into one function: s, scores, weights, context, word.</div></div>
+      </article>
+      <article class="card todo">
+        <div class="card-head"><span class="num">9</span><h3>Decoding loop</h3></div>
+        <div class="row"><span class="label">Plan</span><div>Repeat step 8, feeding each predicted word back in, until a whole sentence is written.</div></div>
+      </article>
+      <article class="card todo">
+        <div class="card-head"><span class="num">10</span><h3>Training (PyTorch)</h3></div>
+        <div class="row"><span class="label">Plan</span><div>Loss, backpropagation and a training loop on 10 to 20 sentence pairs. This is where all the random weights become meaningful.</div></div>
+      </article>
+      <article class="card todo">
+        <div class="card-head"><span class="num">11</span><h3>Attention heatmap</h3></div>
+        <div class="row"><span class="label">Plan</span><div>Plot the weights and check that "chat" attends to "cat".</div></div>
+      </article>
+      <article class="card todo">
+        <div class="card-head"><span class="num">12</span><h3>Recap</h3></div>
+        <div class="row"><span class="label">Plan</span><div>Compare with the self-attention used in Transformers.</div></div>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2>Easy-to-mix-up points</h2>
+    <div class="panel">
+      <ul class="mix">
+        <li><b>H vs H[-1].</b> H is all four encoder states (4,4). H[-1] is only the last row, used once as s0. Scoring and the context both use the full H.</li>
+        <li><b>Two kinds of "weights".</b> Model weights (W1, W2, v, Wx, Wh, ...) are learned parameters. Attention weights are the softmax output, computed fresh at each step and never stored.</li>
+        <li><b>Softmax has no weights.</b> It is a fixed formula. Random numbers live in the scorer's parameters, not in softmax.</li>
+        <li><b>Hard-coded scores.</b> [0.3, 3.0, 1.4, 0.3] are stand-ins for the example. After training the scores come from the scorer. The weighted-sum code itself is the real thing.</li>
+        <li><b>What gets scaled.</b> Weights scale the rows of H, not the scores. The scores were already used up when softmax made the weights.</li>
+        <li><b>Why PyTorch at step 10.</b> NumPy has no automatic gradients, and training needs them to adjust every parameter.</li>
+      </ul>
+    </div>
+  </section>
+</div>
+</body>
+<script type="module">
+  /* Standalone copy: draws the mermaid diagram (the published artifact does this natively). */
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs";
+  const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  mermaid.initialize({ startOnLoad: true, theme: dark ? "dark" : "default" });
+</script>
+</html>
